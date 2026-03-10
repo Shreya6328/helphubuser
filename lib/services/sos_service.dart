@@ -91,8 +91,9 @@ class SosService {
 
         print("✅ SOS sent directly to Supabase");
         return; // 🔴 IMPORTANT: STOP HERE
-      } catch (e) {
+      } catch (e, stack) {
         print("❌ Supabase insert error: $e");
+        print(stack);
       }
     }
 
@@ -131,8 +132,9 @@ class SosService {
       await box.delete('pending');
 
       print("✅ SOS synced to Supabase");
-    } catch (e) {
-      print("❌ Supabase error: $e");
+    } catch (e, stack) {
+      print("❌ Supabase insert error: $e");
+      print(stack);
     }
   }
 }

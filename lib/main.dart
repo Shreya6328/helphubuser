@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart' as fmtc;
+import 'package:flutter/foundation.dart';
 
 import 'map_screen/map_screen.dart';
 import 'Profile/user_profile_page.dart';
@@ -15,22 +16,36 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ✅ INITIALIZE TILE CACHING (v10)
-  await fmtc.FMTCObjectBoxBackend().initialise();
-  await fmtc.FMTCStore('offlineMap').manage.create();
+  try {
+  if (!kIsWeb) {
+    await fmtc.FMTCObjectBoxBackend().initialise();
+    await fmtc.FMTCStore('offlineMap').manage.create();
+  }
+} catch (e) {
+  print("Tile caching error: $e");
+}
 
   // 🔹 LOCAL STORAGE
-  await Hive.initFlutter();
+ await Hive.initFlutter();
+
+try {
   await Hive.openBox('offline_profile');
   await Hive.openBox('offline_sos');
+} catch (e) {
+  print("Hive error: $e");
+}
 
   // 🔹 SUPABASE
+  try {
   await Supabase.initialize(
     url: 'https://iqwbgmlpkfaqytjqcphh.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxd2JnbWxwa2ZhcXl0anFjcGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1OTMwNzEsImV4cCI6MjA4MTE2OTA3MX0.HzwheFwYCrjUJ6KRQfAoMkrJU60GoMD2Y9uJZMX__nY',
   );
-
-  // await ensureAnonymousLogin(); // ✅ ADD THIS LINE
+} catch (e) {
+  print("Supabase init error: $e");
+}
+  await ensureAnonymousLogin(); // ✅ ADD THIS LINE
 
   runApp(const RescueNetApp());
 }
@@ -51,6 +66,16 @@ class RescueNetApp extends StatelessWidget {
     );
   }
 }
+
+
+Future<void> ensureAnonymousLogin() async {
+  final supabase = Supabase.instance.client;
+
+  if (supabase.auth.currentUser == null) {
+    await supabase.auth.signInAnonymously();
+  }
+}
+
 
 /// ----------------------------------------------------
 /// BOTTOM NAVIGATION
